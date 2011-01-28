@@ -1,0 +1,25 @@
+#Rakefile for localerb plugin for cfwheels
+require 'rake/clean'
+CLEAN.include('build','index.cfm')
+
+PLUGIN_VERSION = 0.1
+
+desc 'Build the version number specified (defaults to current codebase)'
+task :build, :version, :needs => ['index.cfm'] do |t,args|
+  args.with_defaults(:version => PLUGIN_VERSION)
+  
+  puts "Building Version: #{args.version}"
+  
+  mkdir_p "build/"
+  
+  sh %{zip -r build/localerb-#{args.version}.zip * -x@exclude.lst} do |ok, res|
+    if ! ok
+      abort("Unable to create zip file")
+    end
+  end
+  
+end
+
+file "index.cfm" => ["README.markdown"] do |t|
+  sh "rdiscount #{t.prerequisites[0]} > #{t.name}"
+end
