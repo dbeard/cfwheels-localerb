@@ -2,7 +2,7 @@
 require 'rake/clean'
 CLEAN.include('build','index.cfm')
 
-PLUGIN_VERSION = 0.1
+PLUGIN_VERSION = 0.2
 
 desc 'Build the version number specified (defaults to current codebase)'
 task :build, :version, :needs => ['index.cfm'] do |t,args|

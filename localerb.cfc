@@ -5,7 +5,7 @@
         <cfreturn this>
     </cffunction>
 	
-	<cffunction name="$" returntype="any">
+	<cffunction name="$" returntype="any" output="false">
 		<cfargument name="key" type="string" required="true"/>
 		<cfargument name="locale" type="string" default="#getCurrentLocale()#"/>
 		<cfscript>
@@ -31,7 +31,7 @@
 		</cfscript>
 	</cffunction>
 	
-	<cffunction name="localeMessageFormat" returntype="any">
+	<cffunction name="localeMessageFormat" returntype="any" output="false">
 		<cfargument name="pattern" type="string" required="true"/>
 		<cfargument name="args" type="array" required="true"/>
 		<cfargument name="locale" type="string" default="#getCurrentLocale()#"/>
@@ -45,7 +45,7 @@
 		<cfset session.locale = arguments.locale/>
 	</cffunction>
 	
-	<cffunction name="getCurrentLocale" returntype="any">
+	<cffunction name="getCurrentLocale" returntype="any" output="false">
 		<cfscript>
 			
 			if(structKeyExists(session,"locale"))
@@ -55,7 +55,7 @@
 		</cfscript>
 	</cffunction>
 	
-	<cffunction name="$getDefaultLocale" returntype="any">
+	<cffunction name="$getDefaultLocale" returntype="any" output="false">
 		<cfscript>
 			returnLocale = "en_US";
 			
