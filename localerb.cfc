@@ -2,6 +2,7 @@
 	
 	<cffunction name="init">
         <cfset this.version = "1.1,1.1.1,1.1.2">
+		<cfset reinitializeLocaleRB()/>
         <cfreturn this>
     </cffunction>
 	
