@@ -87,3 +87,5 @@ Version 0.1 - Initial Release
 Version 0.2 - Fixed output issue
 
 Version 0.3 - Locale cache now reloads when the application reloads - much easier during development
+
+Version 0.3.1 - Added locking for certain variables

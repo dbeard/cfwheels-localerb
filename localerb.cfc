@@ -2,7 +2,12 @@
 	
 	<cffunction name="init">
         <cfset this.version = "1.1,1.1.1,1.1.2">
-		<cfset reinitializeLocaleRB()/>
+		<cfset $getJavaRB(true)/>
+		<cfif structKeyExists(application,"resourceBundles")>
+			<cflock timeout="5" scope="application">
+				<cfset structDelete(application,"resourceBundles")/>
+			</cflock>
+		</cfif>
         <cfreturn this>
     </cffunction>
 	
@@ -78,49 +83,51 @@
 		<cfargument name="reinitialize" type="boolean" default="false"/>
 		
 		<cfif !isDefined("application.resourceBundles") OR arguments.reinitialize>
-			<cfscript>
-				//Create the application variable that will hold all of the bundles
-				application.resourceBundles = structNew();
+			<cflock timeout="20" scope="application">
+				<cfscript>
+					//Create the application variable that will hold all of the bundles
+					application.resourceBundles = structNew();
 			
-				localeFiles = directoryList(getDirectoryFromPath(getBaseTemplatePath()) & "locale",true,'path','*.properties');
+					localeFiles = directoryList(getDirectoryFromPath(getBaseTemplatePath()) & "locale",true,'path','*.properties');
 			
-				//Loop through all files, and set the appropriate application variables
-				for (i=1;i lte ArrayLen(localeFiles);i=i+1) {
-					//First check if it starts with a '.' - we should disregard this. This could be from resource forks, etc
-					if(!reFind("(\\\.)|(/\.)",localeFiles[i])){
-						localeFile = reMatch("[^\\/]*$",localeFiles[i])[1];
-						fileNoExt = reReplace(localeFile,"\.[^.]*$","");
+					//Loop through all files, and set the appropriate application variables
+					for (i=1;i lte ArrayLen(localeFiles);i=i+1) {
+						//First check if it starts with a '.' - we should disregard this. This could be from resource forks, etc
+						if(!reFind("(\\\.)|(/\.)",localeFiles[i])){
+							localeFile = reMatch("[^\\/]*$",localeFiles[i])[1];
+							fileNoExt = reReplace(localeFile,"\.[^.]*$","");
 					
-						split = reFind("_",fileNoExt);
+							split = reFind("_",fileNoExt);
 					
-						//If no underscore was found, we assume default language
-						bundleName = fileNoExt;
-						locale = $getDefaultLocale();
+							//If no underscore was found, we assume default language
+							bundleName = fileNoExt;
+							locale = $getDefaultLocale();
 					
-						//Otherwise, get what it really should be
-						if(split gt 0){
-							bundleName = left(fileNoExt,split - 1);
-							locale = right(fileNoExt,Len(fileNoExt) - split);
-						}
+							//Otherwise, get what it really should be
+							if(split gt 0){
+								bundleName = left(fileNoExt,split - 1);
+								locale = right(fileNoExt,Len(fileNoExt) - split);
+							}
 					
 					
-						//If the bundle doesn't exist, create it
-						if(!structKeyExists(application.resourceBundles,bundleName)){
-							application.resourceBundles[bundleName] = structNew();
-						}
+							//If the bundle doesn't exist, create it
+							if(!structKeyExists(application.resourceBundles,bundleName)){
+								application.resourceBundles[bundleName] = structNew();
+							}
 					
-						//If the locale doesn't exist create it (We allow for mixing of files - not sure when you would want to do this)
-						if(!structKeyExists(application.resourceBundles[bundleName],locale)){
-							application.resourceBundles[bundleName][locale] = structNew();
-						}
+							//If the locale doesn't exist create it (We allow for mixing of files - not sure when you would want to do this)
+							if(!structKeyExists(application.resourceBundles[bundleName],locale)){
+								application.resourceBundles[bundleName][locale] = structNew();
+							}
 					
-						resourceBundle = $getJavaRB().getResourceBundle(getDirectoryFromPath(localeFiles[i]) & bundleName & ".properties",locale);
+							resourceBundle = $getJavaRB().getResourceBundle(getDirectoryFromPath(localeFiles[i]) & bundleName & ".properties",locale);
 					
-						//Merge the resource bundle into the struct
-						structAppend(application.resourceBundles[bundleName][locale],resourceBundle);
-					}	
-				}
-			</cfscript>
+							//Merge the resource bundle into the struct
+							structAppend(application.resourceBundles[bundleName][locale],resourceBundle);
+						}	
+					}
+				</cfscript>
+			</cflock>
 		</cfif>
 		
 		<cfreturn application.resourceBundles/>
@@ -130,7 +137,9 @@
 	<cffunction name="$getJavaRB" returntype="any">
 		<cfargument name="reinitialize" type="boolean" default="false"/>
 		<cfif !isDefined("application.javaRB") OR arguments.reinitialize>
-			<cfset application.javaRB = createObject("component","javaRB")/>
+			<cflock timeout="5" scope="application">
+				<cfset application.javaRB = createObject("component","javaRB")/>
+			</cflock>
 		</cfif>
 		<cfreturn application.javaRB/>
 	</cffunction>
