@@ -1,7 +1,7 @@
 <cfcomponent displayname="Locale Resource Bundle" output="false">
 	
 	<cffunction name="init">
-        <cfset this.version = "1.1,1.1.1,1.1.2">
+        <cfset this.version = "1.1,1.1.1,1.1.2,1.1.3,1.1.4,1.1.5">
 		<cfset $getJavaRB(true)/>
 		<cfif structKeyExists(application,"resourceBundles")>
 			<cflock timeout="5" scope="application">
@@ -13,27 +13,57 @@
 	
 	<cffunction name="$" returntype="any" output="false">
 		<cfargument name="key" type="string" required="true"/>
+		<cfargument name="bundle" type="string" default="global"/>
 		<cfargument name="locale" type="string" default="#getCurrentLocale()#"/>
 		<cfscript>
-			//Determine if we are specifying a bundle
-			split = reFind("\.",arguments.key);
+			var rb = $getResourceBundleStruct();
 			
-			//If no '.' was found, we assume default bundle "global"
-			bundleName = "global";
-			bundleKey = arguments.key;
-			
-			//Otherwise, get the real bundle and key
-			if(split gt 0){
-				bundleName = left(arguments.key,split - 1);
-				bundleKey = right(arguments.key,Len(arguments.key) - split);
+			if(!structKeyExists(rb,arguments.bundle)){
+				if(get('environment') eq 'production'){
+					return "";
+				}
+				else{
+					throw("Bundle does not exist in resource bundles");
+				}
 			}
+			
+			var bundle = rb[arguments.bundle];
 			
 			try{
-				return $getResourceBundleStruct()[bundleName][arguments.locale][bundleKey];
+				if(structKeyExists(bundle,arguments.locale)){
+					if(structKeyExists(bundle[arguments.locale],arguments.key)){
+						return bundle[arguments.locale][arguments.key];
+					}
+				}
+				
+				var split = reFind("_",arguments.locale);
+				if(split){
+					var langOnly = left(arguments.locale,split-1);
+					if(structKeyExists(bundle,langOnly)){
+						if(structKeyExists(bundle[langOnly],arguments.key)){
+							return bundle[langOnly][arguments.key];
+						}
+					}
+				}
+				
+				var defaultLocale = $getDefaultLocale();
+				if(structKeyExists(bundle,defaultLocale)){
+					if(structKeyExists(bundle[defaultLocale],arguments.key)){
+						return bundle[defaultLocale][arguments.key];
+					}
+				}
 			}
 			catch(any e){
-				throw("Key or bundle does not exist in resource bundles.")
+				if(get('environment') eq 'production'){
+					return "";
+				}
+				throw("An error occurred when retrieving the key from the resource bundle");
 			}
+			
+			if(get('environment') eq 'production'){
+				return "";
+			}
+			throw("Key or bundle does not exist in resource bundles");
 		</cfscript>
 	</cffunction>
 	
@@ -63,7 +93,7 @@
 	
 	<cffunction name="$getDefaultLocale" returntype="any" output="false">
 		<cfscript>
-			returnLocale = "en_US";
+			returnLocale = "en";
 			
 			try{
 				returnLocale = get('defaultLocale');
